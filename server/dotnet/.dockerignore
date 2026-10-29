@@ -1,0 +1,20 @@
+# Build output
+bin/
+obj/
+
+# Biometric diagnostics (never ship / never bake into images)
+*.pgm
+captured/
+diagnostic-captures/
+
+# Local configuration / secrets
+appsettings.*.local.json
+*.user
+
+# Docs and IDE
+README.md
+.vs/
+.vscode/
+.idea/
+Dockerfile
+.dockerignore

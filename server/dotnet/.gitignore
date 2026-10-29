@@ -1,0 +1,14 @@
+obj
+bin
+
+# Diagnostic biometric captures must never be committed.
+# NOTE: do not use a bare "diagnostics/" pattern: on case-insensitive file
+# systems it also ignores the source folder "Diagnostics/".
+*.pgm
+captured/
+diagnostic-captures/
+
+# Local overrides / secrets
+appsettings.*.local.json
+appsettings.local.json
+*.user
