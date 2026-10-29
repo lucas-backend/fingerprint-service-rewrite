@@ -1,0 +1,31 @@
+services:
+  fingerprint-service:
+    build:
+      context: ./dotnet
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Postgres: ${POSTGRES_CONNECTION_STRING:?Set POSTGRES_CONNECTION_STRING in server/.env}
+    ports:
+      - "5001:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  express-api:
+    build:
+      context: ./express
+    env_file:
+      - ./express/.env
+    environment:
+      FINGERPRINT_SERVICE_URL: http://fingerprint-service:8080
+      # localhost inside this container is the Express container itself.
+      # PostgreSQL is on the Docker host unless the deployment overrides this.
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+    ports:
+      - "3000:3000"
+    depends_on:
+      fingerprint-service:
+        condition: service_healthy

@@ -236,11 +236,11 @@ Content-Type: application/octet-stream
 Body: 18432 byte raw packed image
 ```
 
-`externalUserId` wajib diisi dan hanya boleh berisi huruf, angka, `-`, `_`,
-atau `.`, dengan panjang maksimum 64 karakter. Contoh:
+`externalUserId` wajib berupa UUID yang sudah ada pada kolom `users.id` di
+database. Contoh:
 
 ```text
-/api/fingerprint/enroll/raw?externalUserId=EMP-001
+/api/fingerprint/enroll/raw?externalUserId=550e8400-e29b-41d4-a716-446655440000
 ```
 
 ### Response yang diharapkan
@@ -375,9 +375,9 @@ Saat boot, firmware menampilkan menu admin. Perintah yang tersedia:
 > enroll
 === PENDAFTARAN FINGERPRINT ===
 Masukkan externalUserId lalu tekan Enter.
-Contoh: 123 atau EMP-001
-> EMP-001
-ID pengguna: EMP-001
+Contoh: 550e8400-e29b-41d4-a716-446655440000
+> 550e8400-e29b-41d4-a716-446655440000
+ID pengguna: 550e8400-e29b-41d4-a716-446655440000
 Mode ENROLLMENT aktif.
 Tempelkan jari untuk mendaftarkan fingerprint.
 ```
@@ -416,10 +416,10 @@ Contoh tampilan CLI saat enrollment:
 Mode ENROLLMENT aktif.
 Tempelkan jari untuk mendaftarkan fingerprint.
 ...
-Endpoint: http://192.168.137.1:3000/api/fingerprint/enroll/raw?externalUserId=EMP-001
+Endpoint: http://192.168.137.1:3000/api/fingerprint/enroll/raw?externalUserId=550e8400-e29b-41d4-a716-446655440000
 HTTP Status: 200
 Response server:
-{"success":true,"subjectId":1,"fingerprintId":2,"externalUserId":"EMP-001"}
+{"success":true,"subjectId":1,"fingerprintId":2,"externalUserId":"550e8400-e29b-41d4-a716-446655440000"}
 ```
 
 ---

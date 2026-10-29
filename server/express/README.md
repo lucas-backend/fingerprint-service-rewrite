@@ -54,7 +54,7 @@ Isi `.env` dengan nilai nyata. Jangan commit `.env`.
 | `DB_USER` | - | User database. |
 | `DB_PASSWORD` | - | Password database. Wajib kecuali `ALLOW_MISSING_DB=1`. |
 | `DB_NAME` | - | Nama database, umumnya `limen_db`. |
-| `FINGERPRINT_SERVICE_URL` | `http://localhost:5001` | Base URL service .NET. |
+| `FINGERPRINT_SERVICE_URL` | `http://localhost:5001` | Base URL service .NET. In Docker Compose use `http://fingerprint-service:8080`. |
 | `FINGERPRINT_API_KEY` | kosong | API key yang diteruskan ke service .NET sebagai `X-Api-Key`. |
 | `ApiKey__Value` | kosong | Alias fallback untuk API key fingerprint. |
 | `API_KEY` / `EXPRESS_API_KEY` | kosong | Jika diisi, client wajib mengirim `X-Api-Key` pada `/api/*`. |
@@ -104,6 +104,29 @@ Dengan Docker:
 docker build -t express-api .
 docker run --rm -p 3000:3000 --env-file .env express-api
 ```
+
+Jika Express dan fingerprint service berjalan dalam Docker Compose, jalankan
+dari direktori `server`:
+
+```powershell
+Copy-Item .env.example .env
+Copy-Item ..\.env.example ..\.env
+# Isi DB_* di server/express/.env, POSTGRES_CONNECTION_STRING dan DB_HOST
+# di server/.env. DB_HOST harus menunjuk ke PostgreSQL yang sama dengan
+# fingerprint service; jangan gunakan localhost dari dalam container.
+docker compose up --build
+```
+
+Compose otomatis memakai `http://fingerprint-service:8080` untuk komunikasi
+antar-container. Dari host, API Express tersedia di
+`http://localhost:3000`, sedangkan fingerprint service di
+`http://localhost:5001`.
+
+Secara default Compose memakai `host.docker.internal` untuk `DB_HOST`, karena
+PostgreSQL pada contoh ini berjalan di host Docker. Jika PostgreSQL berjalan di
+container atau host lain, ubah `DB_HOST` di `server/.env` ke hostname jaringan
+yang sama dan pastikan `POSTGRES_CONNECTION_STRING` menggunakan database
+tersebut juga.
 
 Health check container memanggil `GET /health`.
 

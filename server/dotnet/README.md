@@ -64,7 +64,7 @@ $env:ApiKey__Value="<shared-api-key>" # opsional
 | `Server:MaxRequestBodySizeBytes` | `65536` | Limit body HTTP global. |
 | `Cors:AllowedOrigins` | `[]` | Origin CORS eksplisit; kosong berarti middleware CORS tidak didaftarkan. |
 | `ApiKey:Value` | kosong | Jika diisi, semua `/api/*` harus mengirim `X-Api-Key`. Endpoint health dikecualikan. |
-| `Urls` | `http://0.0.0.0:5001` | URL binding saat berjalan lokal. |
+| `Urls` | `http://0.0.0.0:8080` | URL binding default; saat development gunakan `dotnet run --urls http://localhost:5001`. |
 
 ## Menjalankan lokal
 
@@ -87,8 +87,9 @@ docker run --rm -p 5001:8080 `
   fingerprint-service
 ```
 
-Container listen pada port 8080 dan memakai user non-root. Health check image
-memanggil `/health/live`.
+Container listen pada port 8080 dan memakai user non-root. Port `5001` hanya
+port host; antar-container gunakan `http://fingerprint-service:8080`.
+Health check image memanggil `/health/live`.
 
 ## Endpoint utama
 

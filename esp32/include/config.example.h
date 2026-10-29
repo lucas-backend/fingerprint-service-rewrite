@@ -1,19 +1,14 @@
 #pragma once
-// =====================================================
-// ESP32 local configuration — TEMPLATE
-// =====================================================
-// Copy to `config.h` (gitignored) and fill in real values.
-// Never commit `config.h` with real credentials.
-//
-//   copy  esp32/include/config.example.h  ->  esp32/include/config.h
-//
-// Alternatively, pass values via PlatformIO build_flags:
-//   build_flags = -D WIFI_SSID="\"MySSID\"" -D WIFI_PASSWORD="\"secret\"" -D SERVER_URL="\"http://192.168.1.7:3000/api/fingerprint/identify\""
-//
-// `config.h` (if present) overrides the placeholder defaults in main.cpp
-// via the #ifndef guards, so no source edit is needed.
 
-#define WIFI_SSID "MyWiFiSSID"
-#define WIFI_PASSWORD "MyWiFiPassword"
-// Express gateway endpoint (must be reachable from ESP32's WiFi)
-#define SERVER_URL "http://192.168.1.7:3000/api/fingerprint/identify"
+// Copy this file to config.h and replace every placeholder.
+// Never commit config.h or real credentials.
+
+#define WIFI_SSID "your-wifi-ssid"
+#define WIFI_PASSWORD "your-wifi-password"
+
+// Use an address reachable from the ESP32; localhost refers to the ESP32.
+#define SERVER_URL "http://192.168.1.100:3000/api/fingerprint/identify"
+#define SERVER_ENROLL_URL "http://192.168.1.100:3000/api/fingerprint/enroll/raw"
+
+// Clients must send auth:<token> before issuing WebSocket commands.
+#define WEBSOCKET_TOKEN "replace-with-a-long-random-token"
