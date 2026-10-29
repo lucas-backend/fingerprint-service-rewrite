@@ -1,0 +1,8 @@
+.pio
+.pioenvs
+.piolibdeps
+
+# Local WiFi / server credentials — never commit real values.
+# See include/config.example.h -> copy to include/config.h
+include/config.h
+config.h

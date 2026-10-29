@@ -1,0 +1,36 @@
+Jari jempol tangan kiri template:
+p2d2ZXJzaW9ueBpTb3VyY2VBRklTIGZvciAuTkVUIDMuMTQuMGV3aWR0aBi9ZmhlaWdodBi9anBvc2l0aW9uc1iJGBoYQBh2GF8YjBiUGE8YiBg9anBvc2l0aW9uc1mJGBgYXBiYGCkYIhigGHUYdhhHamRpcmVjdGlvbnOJ+kCVMqL6QI14R/o/iLKw+j+vy5n6QJUyovpAhFo6+j+YW2z6QIlD3/o/qbRlZXR5cGVzaUVFRUVCRUJFQg==
+
+
+// Template request di powershell
+$body = @{
+    name = "Budi"
+    employeeCode = "EMP001"
+    template = "p2d2ZXJzaW9ueBpTb3VyY2VBRklTIGZvciAuTkVUIDMuMTQuMGV3aWR0aBi9ZmhlaWdodBi9anBvc2l0aW9uc1iJGBoYQBh2GF8YjBiUGE8YiBg9anBvc2l0aW9uc1mJGBgYXBiYGCkYIhigGHUYdhhHamRpcmVjdGlvbnOJ+kCVMqL6QI14R/o/iLKw+j+vy5n6QJUyovpAhFo6+j+YW2z6QIlD3/o/qbRlZXR5cGVzaUVFRUVCRUJFQg=="
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+    -Uri "http://localhost:5001/enrollment" `
+    -Method Post `
+    -ContentType "application/json" `
+    -Body $body
+
+// Result Response
+success      : True
+userId       : 1
+name         : Budi
+employeeCode : EMP001
+templateSize : 187
+
+// Database result
++----+------+---------------+---------------------+
+| id | name | employee_code | created_at          |
++----+------+---------------+---------------------+
+|  1 | Budi | EMP001        | 2026-09-26 18:32:01 |
++----+------+---------------+---------------------+
+
++----+---------+---------------+---------------------+
+| id | user_id | template_size | created_at          |
++----+---------+---------------+---------------------+
+|  1 |       1 |           187 | 2026-09-26 18:32:01 |
++----+---------+---------------+---------------------+

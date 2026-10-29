@@ -1,0 +1,10 @@
+$body = @{
+    probeTemplate = "p2d2ZXJzaW9ueBpTb3VyY2VBRklTIGZvciAuTkVUIDMuMTQuMGV3aWR0aBi9ZmhlaWdodBi9anBvc2l0aW9uc1iLGEYYXxifGHwYqBguGEkYahggGHIYd2pwb3NpdGlvbnNZixiYGJ4YRhiCGHIYfBg2GIQYZhgaGKBqZGlyZWN0aW9uc4v6P4PjY/pAhYDG+kCxtIT6QI71BvpApFPp+kCSCC/6QKtjdPo/iLKw+j+2AQf6QBFS+fpAhYDGZXR5cGVza0VCQkVCQkVFRUVC"
+    candidateTemplate = "p2d2ZXJzaW9ueBpTb3VyY2VBRklTIGZvciAuTkVUIDMuMTQuMGV3aWR0aBi9ZmhlaWdodBi9anBvc2l0aW9uc1iLGBwYVBhqGJIYNRgzGEAYWBhqGIgYrGpwb3NpdGlvbnNZixh0GJQYkBhgGJ4YKBiOGHYYchg2GGZqZGlyZWN0aW9uc4v6QIwF2vpAea/P+kB+sVf6QKAfgfpAgTRq+kCrY3T6P0IlC/o/XcX8+kCMBdr6QLN4YPpAp5cEZXR5cGVza0JFQkVCQkJFRUJF"
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+    -Uri "http://localhost:5001/fingerprint/match-test" `
+    -Method POST `
+    -ContentType "application/json" `
+    -Body $body

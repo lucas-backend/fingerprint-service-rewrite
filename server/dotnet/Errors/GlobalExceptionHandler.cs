@@ -2,7 +2,7 @@ using System.Net.Sockets;
 using FingerprintService.Contracts;
 using FingerprintService.Middleware;
 using Microsoft.AspNetCore.Diagnostics;
-using MySqlConnector;
+using Npgsql;
 
 namespace FingerprintService.Errors;
 
@@ -100,7 +100,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
             ApiException api => (api.StatusCode, api.Code, api.Message),
 
             // Infrastructure / DB — never leak SQL, host, or stack to client
-            MySqlException => (
+            NpgsqlException => (
                 StatusCodes.Status503ServiceUnavailable,
                 ApiErrorCodes.DatabaseUnavailable,
                 "Database is currently unavailable. Please try again later."),
@@ -111,12 +111,6 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
                 "Database is currently unavailable. Please try again later."),
 
             TimeoutException => (
-                StatusCodes.Status503ServiceUnavailable,
-                ApiErrorCodes.DatabaseUnavailable,
-                "Database is currently unavailable. Please try again later."),
-
-            // MySqlConnector protocol-level failures
-            MySqlProtocolException => (
                 StatusCodes.Status503ServiceUnavailable,
                 ApiErrorCodes.DatabaseUnavailable,
                 "Database is currently unavailable. Please try again later."),

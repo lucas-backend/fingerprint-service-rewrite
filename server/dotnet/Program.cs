@@ -69,8 +69,8 @@ builder.Services.AddSingleton<R503ImageService>();
 builder.Services.AddSingleton<IFingerprintRecognitionService, FingerprintRecognitionService>();
 builder.Services.AddSingleton<IFingerprintDiagnosticStore, FileSystemDiagnosticStore>();
 
-builder.Services.AddScoped<MySqlConnectionFactory>();
-builder.Services.AddScoped<IFingerprintRepository, MySqlFingerprintRepository>();
+builder.Services.AddScoped<PostgresConnectionFactory>();
+builder.Services.AddScoped<IFingerprintRepository, PostgresFingerprintRepository>();
 builder.Services.AddScoped<EnrollmentService>();
 builder.Services.AddScoped<IdentificationService>();
 
@@ -84,7 +84,7 @@ builder.Services.AddSingleton<FingerprintMetrics>();
 
 builder.Services
     .AddHealthChecks()
-    .AddCheck<MySqlHealthCheck>("mysql", tags: new[] { "ready" });
+    .AddCheck<PostgresHealthCheck>("postgres", tags: new[] { "ready" });
 
 // ---------------------------------------------------------
 // Error handling

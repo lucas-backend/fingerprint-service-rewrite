@@ -1,0 +1,213 @@
+// A VS B
+success               : True
+probeTemplateSize     : 197
+candidateTemplateSize : 197
+score                 : 45.02
+threshold             : 40
+matched               : True
+
+
+// A VS C
+success               : True
+probeTemplateSize     : 197
+candidateTemplateSize : 197
+score                 : 3.47
+threshold             : 40
+matched               : False
+
+// B VS C
+success               : True
+probeTemplateSize     : 197
+candidateTemplateSize : 197
+score                 : 2.58
+threshold             : 40
+matched               : False
+
+// A vs D
+success               : True
+probeTemplateSize     : 197
+candidateTemplateSize : 207
+score                 : 45.68
+threshold             : 40
+matched               : True
+
+// A vs E
+success               : True
+probeTemplateSize     : 197
+candidateTemplateSize : 177
+score                 : 48.78
+threshold             : 40
+matched               : True
+
+// A vs F
+success               : True
+probeTemplateSize     : 197
+candidateTemplateSize : 226
+score                 : 36.77
+threshold             : 40
+matched               : False
+
+// B vs D
+success               : True
+probeTemplateSize     : 197
+candidateTemplateSize : 207
+score                 : 20.89
+threshold             : 40
+matched               : False
+
+// B vs E
+success               : True
+probeTemplateSize     : 197
+candidateTemplateSize : 177
+score                 : 45.62
+threshold             : 40
+matched               : True
+
+C vs G
+success               : True
+probeTemplateSize     : 197
+candidateTemplateSize : 147
+score                 : 1.52
+threshold             : 40
+matched               : False
+
+C vs H
+success               : True
+probeTemplateSize     : 197
+candidateTemplateSize : 187
+score                 : 1.21
+threshold             : 40
+matched               : False
+
+C vs I
+success               : True
+probeTemplateSize     : 197
+candidateTemplateSize : 247
+score                 : 11.39
+threshold             : 40
+matched               : False
+
+G vs H
+success               : True
+probeTemplateSize     : 147
+candidateTemplateSize : 187
+score                 : 9.08
+threshold             : 40
+matched               : False
+
+G vs I
+success               : True
+probeTemplateSize     : 147
+candidateTemplateSize : 247
+score                 : 15.45
+threshold             : 40
+matched               : False
+
+H vs I
+success               : True
+probeTemplateSize     : 187
+candidateTemplateSize : 247
+score                 : 2.69
+threshold             : 40
+matched               : False
+
+
+
+
+
+======================================
+R503 RAW IMAGE
+======================================
+R503 raw size: 18432 bytes
+Width: 192
+Height: 192
+Pixel count: 36864
+Min: 0
+Max: 255
+Average: 123,39
+PGM saved: C:\Users\User\Desktop\fingerprint-new2\fingerprint-service\fingerprint_20260926_180155.pgm
+======================================
+R503 RAW IMAGE
+======================================
+R503 raw size: 18432 bytes
+Width: 192
+Height: 192
+Pixel count: 36864
+Min: 0
+Max: 255
+Average: 135,74
+PGM saved: C:\Users\User\Desktop\fingerprint-new2\fingerprint-service\fingerprint_20260926_180214.pgm
+======================================
+R503 RAW IMAGE
+======================================
+R503 raw size: 18432 bytes
+Width: 192
+Height: 192
+Pixel count: 36864
+Min: 0
+Max: 255
+Average: 121,04
+PGM saved: C:\Users\User\Desktop\fingerprint-new2\fingerprint-service\fingerprint_20260926_180256.pgm
+======================================
+R503 RAW IMAGE
+======================================
+R503 raw size: 18432 bytes
+Width: 192
+Height: 192
+Pixel count: 36864
+Min: 0
+Max: 255
+Average: 122,39
+PGM saved: C:\Users\User\Desktop\fingerprint-new2\fingerprint-service\fingerprint_20260926_180324.pgm
+
+
+
+
+
+///////////////////////////
+
+
+======================================
+R503 RAW IMAGE
+======================================
+R503 raw size: 18432 bytes
+Width: 192
+Height: 192
+Pixel count: 36864
+Min: 0
+Max: 255
+Average: 134,67
+PGM saved: C:\Users\User\Desktop\fingerprint-new2\fingerprint-service\fingerprint_20260926_181305.pgm
+======================================
+R503 RAW IMAGE
+======================================
+R503 raw size: 18432 bytes
+Width: 192
+Height: 192
+Pixel count: 36864
+Min: 0
+Max: 255
+Average: 132,00
+PGM saved: C:\Users\User\Desktop\fingerprint-new2\fingerprint-service\fingerprint_20260926_181314.pgm
+======================================
+R503 RAW IMAGE
+======================================
+R503 raw size: 18432 bytes
+Width: 192
+Height: 192
+Pixel count: 36864
+Min: 0
+Max: 255
+Average: 126,07
+PGM saved: C:\Users\User\Desktop\fingerprint-new2\fingerprint-service\fingerprint_20260926_181323.pgm
+======================================
+R503 RAW IMAGE
+======================================
+R503 raw size: 18432 bytes
+Width: 192
+Height: 192
+Pixel count: 36864
+Min: 0
+Max: 255
+Average: 128,98
+PGM saved: C:\Users\User\Desktop\fingerprint-new2\fingerprint-service\fingerprint_20260926_181332.pgm

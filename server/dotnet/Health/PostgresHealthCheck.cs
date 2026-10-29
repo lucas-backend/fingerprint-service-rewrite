@@ -1,21 +1,21 @@
 using FingerprintService.Data;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using MySqlConnector;
+using Npgsql;
 
 namespace FingerprintService.Health;
 
 /// <summary>
-/// Lightweight readiness probe: verifies MySQL is reachable. Deliberately does
+/// Lightweight readiness probe: verifies PostgreSQL is reachable. Deliberately does
 /// not perform any fingerprint processing.
 /// </summary>
-public sealed class MySqlHealthCheck : IHealthCheck
+public sealed class PostgresHealthCheck : IHealthCheck
 {
-    private readonly MySqlConnectionFactory _connectionFactory;
-    private readonly ILogger<MySqlHealthCheck> _logger;
+    private readonly PostgresConnectionFactory _connectionFactory;
+    private readonly ILogger<PostgresHealthCheck> _logger;
 
-    public MySqlHealthCheck(
-        MySqlConnectionFactory connectionFactory,
-        ILogger<MySqlHealthCheck> logger)
+    public PostgresHealthCheck(
+        PostgresConnectionFactory connectionFactory,
+        ILogger<PostgresHealthCheck> logger)
     {
         _connectionFactory = connectionFactory;
         _logger = logger;
@@ -39,28 +39,28 @@ public sealed class MySqlHealthCheck : IHealthCheck
 
             await connection.OpenAsync(timeoutCts.Token);
 
-            await using var command = new MySqlCommand("SELECT 1;", connection);
+            await using var command = new NpgsqlCommand("SELECT 1;", connection);
             using var cmdTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cmdTimeout.Token);
             await command.ExecuteScalarAsync(linked.Token);
 
-            return HealthCheckResult.Healthy("MySQL reachable.");
+            return HealthCheckResult.Healthy("PostgreSQL reachable.");
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            return HealthCheckResult.Unhealthy("MySQL health check cancelled.");
+            return HealthCheckResult.Unhealthy("PostgreSQL health check cancelled.");
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("MySQL health check timed out.");
-            return HealthCheckResult.Unhealthy("MySQL health check timed out.");
+            _logger.LogWarning("PostgreSQL health check timed out.");
+            return HealthCheckResult.Unhealthy("PostgreSQL health check timed out.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MySQL health check failed.");
+            _logger.LogError(ex, "PostgreSQL health check failed.");
 
             // Detail intentionally omitted from the returned description.
-            return HealthCheckResult.Unhealthy("MySQL connection failed.");
+            return HealthCheckResult.Unhealthy("PostgreSQL connection failed.");
         }
     }
 }

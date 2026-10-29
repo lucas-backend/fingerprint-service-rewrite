@@ -35,7 +35,7 @@ public sealed class HealthController : ControllerBase
 
     /// <summary>
     /// Readiness probe: the service can serve fingerprint requests, including
-    /// required dependencies (currently MySQL).
+    /// required dependencies (currently PostgreSQL).
     /// </summary>
     [HttpGet("health/ready")]
     public async Task<IActionResult> Ready(CancellationToken cancellationToken)

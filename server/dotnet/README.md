@@ -1,272 +1,196 @@
-# Fingerprint Service
+# Fingerprint Service (.NET)
 
-Standalone fingerprint enrollment and identification service built on
-**ASP.NET Core (.NET 8)** with **SourceAFIS** as the recognition engine and
-**MySQL (`limen_db`)** as the biometric template store.
+Service ASP.NET Core 8 untuk mengubah citra fingerprint R503 menjadi template
+SourceAFIS, menyimpan template ke PostgreSQL, melakukan enrollment, dan
+mengidentifikasi fingerprint. Service ini hanya menyimpan relasi
+`externalUserId` (UUID dari tabel `users`) dan data biometrik; data aplikasi
+seperti nama, email, atau employee code tidak diproses atau dikembalikan.
 
-It is an **independent service**. It owns its own API contract, configuration,
-and database. It does **not** store or access application data (names,
-employee codes, classes, attendance). Application data lives in the
-application server's own database (`limen_db`) and is linked to the
-fingerprint service only through the string `externalUserId`.
+## Tanggung jawab service
 
----
+- Menerima citra R503 packed 4-bit berukuran tepat **18.432 byte**.
+- Mengubah citra menjadi grayscale 192 x 192, lalu membuat template SourceAFIS.
+- Menyimpan maksimal tiga template per subject secara default.
+- Mencocokkan probe terhadap seluruh template yang terdaftar.
+- Menyediakan API JSON, endpoint compatibility lama, health check, dan
+  diagnostics yang dinonaktifkan secara default.
 
-## 1. Database ownership
+## Prasyarat
 
-```
-MySQL Server
-└── limen_db    owned by server (unified)
-    ├── users, identifications (server)
-    ├── fingerprint_subjects    (external_user_id -> application user id)
-    └── fingerprint_templates   (serialized SourceAFIS template)
-```
+- .NET SDK 8.
+- PostgreSQL yang memiliki database `limen_db`.
+- Schema database pada [../express/database/schema.sql](../express/database/schema.sql)
+  sudah diterapkan. Role/grant dapat memakai
+  [../express/database/grants.sql](../express/database/grants.sql).
+- `externalUserId` harus berupa UUID yang sudah ada pada tabel `users`.
 
-- The service only queries `fingerprint_subjects` + `fingerprint_templates` in `limen_db`.
-- No cross-table FK between application tables and fingerprint tables.
-- The service never stores 
-ame`, `employee_code`, class, schedule, or
-  attendance.
+## Struktur direktori
 
-Schema: `../server/database/schema.sql` (single source of truth, owned by server)
-Tables: `users`, `identifications` (server) + `fingerprint_subjects`, `fingerprint_templates` (this service)
+| Direktori/file | Fungsi |
+|---|---|
+| `Program.cs` | Dependency injection, middleware, routing, Swagger, health check, dan limit request. |
+| `Controllers/` | Endpoint versioned, compatibility lama, dan health. |
+| `Application/` | Use case enrollment dan identification. |
+| `Recognition/` | Integrasi SourceAFIS. |
+| `Imaging/` | Validasi dan unpack format R503. |
+| `Data/` | Repository PostgreSQL untuk subject/template fingerprint. |
+| `Configuration/` | Opsi `Fingerprint`, `Server`, dan `Cors`. |
+| `Middleware/` | API key opsional dan correlation/request ID. |
+| `Diagnostics/` | Penyimpanan capture `.pgm` saat diaktifkan eksplisit. |
+| `Contracts/` | Bentuk request dan response API. |
 
-```
-fingerprint_subjects
-  id BIGINT PK
-  external_user_id VARCHAR(100) UNIQUE
-  created_at
+## Konfigurasi
 
-fingerprint_templates
-  id BIGINT PK
-  subject_id BIGINT FK -> fingerprint_subjects(id) ON DELETE CASCADE
-  template LONGBLOB
-  created_at
-```
+Konfigurasi lokal tersedia di [appsettings.json](./appsettings.json).
+Untuk production, gunakan environment variable atau secret manager, bukan
+menyimpan password di file.
 
----
+Contoh environment variable PowerShell:
 
-## 2. Architecture
-
-```
-Client (R503 / app / gateway)
-        │ HTTP/HTTPS
-        ▼
-Fingerprint Service
-  Controllers -> Application -> Recognition/Imaging -> Repository
-        │ SQL
-        ▼
-limen_db
+```powershell
+$env:ConnectionStrings__Postgres="Host=localhost;Port=5432;Database=limen_db;Username=limen_user;Password=<secret>;Timeout=5;Command Timeout=5;Maximum Pool Size=20"
+$env:ASPNETCORE_ENVIRONMENT="Development"
+$env:ApiKey__Value="<shared-api-key>" # opsional
 ```
 
-Layers: `Controllers` (API) → `Application` (use cases) → `Recognition`
-(SourceAFIS) / `Imaging` (R503) → `Data` (repository) → `limen_db`.
-Plus `Diagnostics`, `Configuration`, `Errors`, `Health`, `Middleware`.
+| Key | Default | Keterangan |
+|---|---:|---|
+| `ConnectionStrings__Postgres` | - | Connection string PostgreSQL, wajib saat endpoint database digunakan. |
+| `Fingerprint:Dpi` | `508` | DPI sensor untuk SourceAFIS. Harus sesuai karakteristik sensor. |
+| `Fingerprint:MatchThreshold` | `40` | Batas score agar dianggap cocok; kalibrasikan dengan data nyata sebelum production. |
+| `Fingerprint:MaxTemplatesPerSubject` | `3` | Template maksimum per user; template tertua dihapus saat melebihi limit. |
+| `Fingerprint:Diagnostics:SavePgm` | `false` | Menulis capture `.pgm`; jangan aktifkan di production karena berisi biometrik. |
+| `Fingerprint:Diagnostics:Directory` | `./diagnostic-captures` | Direktori output diagnostics, relatif terhadap content root. |
+| `Server:MaxRequestBodySizeBytes` | `65536` | Limit body HTTP global. |
+| `Cors:AllowedOrigins` | `[]` | Origin CORS eksplisit; kosong berarti middleware CORS tidak didaftarkan. |
+| `ApiKey:Value` | kosong | Jika diisi, semua `/api/*` harus mengirim `X-Api-Key`. Endpoint health dikecualikan. |
+| `Urls` | `http://0.0.0.0:5001` | URL binding saat berjalan lokal. |
 
----
+## Menjalankan lokal
 
-## 3. Fingerprint pipeline (unchanged)
-
+```powershell
+dotnet restore
+dotnet run --urls http://localhost:5001
 ```
-R503 packed image 18,432 bytes
-  -> nibble unpack -> 192x192 grayscale 36,864 bytes (nibble * 17)
-  -> FingerprintImage(192,192,Dpi)
-  -> FingerprintTemplate.ToByteArray()
-  -> LONGBLOB
+
+Swagger hanya tersedia pada environment `Development` di
+`http://localhost:5001/swagger`.
+
+## Menjalankan dengan Docker
+
+Build dan jalankan dari direktori ini:
+
+```powershell
+docker build -t fingerprint-service .
+docker run --rm -p 5001:8080 `
+  -e ConnectionStrings__Postgres="Host=host.docker.internal;Port=5432;Database=limen_db;Username=limen_user;Password=<secret>" `
+  fingerprint-service
 ```
 
-Protocol constants: width 192, height 192, 36,864 pixels, 18,432 packed bytes,
+Container listen pada port 8080 dan memakai user non-root. Health check image
+memanggil `/health/live`.
 
-ibble * 17`. The serialized template format is unchanged, so existing
-templates in `limen_db` remain readable. Templates are never regenerated
-by this service.
+## Endpoint utama
 
----
+Semua endpoint menerima `Content-Type: application/octet-stream` untuk body
+binary, kecuali enrollment berbasis template.
 
-## 4. API
+### `POST /api/v1/fingerprints/enroll`
 
-All user references are `externalUserId` (a string). The service never accepts
-or returns name/employee code.
+Menyimpan template SourceAFIS yang sudah diencode Base64.
 
-| Method | Route | Body | Description |
-| --- | --- | --- | --- |
-| `POST` | `/api/v1/fingerprints/enroll` | JSON `{ externalUserId, template }` | Enroll from Base64 template |
-| `POST` | `/api/v1/fingerprints/enroll/raw?externalUserId=...` | `octet-stream` | Enroll raw R503 image |
-| `POST` | `/api/v1/fingerprints/identify` | `octet-stream` | Identify raw R503 image |
-| `POST` | `/api/v1/fingerprints/diagnostics/capture` | `octet-stream` | Diagnostic decode (PGM only if enabled) |
-| `GET` | `/api/v1/health` | — | Versioned health summary |
-| `GET` | `/health`, `/health/live`, `/health/ready` | — | Liveness / readiness |
+```powershell
+curl.exe -X POST http://localhost:5001/api/v1/fingerprints/enroll `
+  -H "Content-Type: application/json" `
+  -d '{\"externalUserId\":\"<users-uuid>\",\"template\":\"<base64-template>\"}'
+```
 
-### Legacy (backward compatible)
-
-| Method | Route | Notes |
-| --- | --- | --- |
-| `POST` | `/identification` | Same as v1 identify; 404 when no subjects enrolled |
-| `POST` | `/enrollment` | Base64 template; resolves `externalUserId`, else falls back to legacy `employeeCode` |
-| `POST` | `/fingerprint/template` | Returns Base64 template (legacy/testing) |
-| `POST` | `/fingerprint/raw` | Diagnostic decode |
-| `POST` | `/fingerprint/match-test` | Compare two Base64 templates |
-
-### Identification response
+Response sukses:
 
 ```json
 {
   "success": true,
-  "matched": true,
-  "score": 57.97,
-  "candidateCount": 10,
-  "externalUserId": "123",
-  "fingerprintId": 456
+  "subjectId": 1,
+  "fingerprintId": 1,
+  "externalUserId": "<users-uuid>",
+  "templateSize": 1234
 }
 ```
 
-Not matched (normal business result, HTTP 200):
+### `POST /api/v1/fingerprints/enroll/raw?externalUserId=<uuid>`
 
-```json
-{ "success": true, "matched": false, "score": 12.34, "candidateCount": 10 }
+Pilihan enrollment yang disarankan. Kirim tepat 18.432 byte R503; template
+dibuat di service sehingga template tidak perlu melewati caller.
+
+```powershell
+curl.exe -X POST "http://localhost:5001/api/v1/fingerprints/enroll/raw?externalUserId=<users-uuid>" `
+  -H "Content-Type: application/octet-stream" `
+  --data-binary "@capture.r503"
 ```
 
-The service deliberately does **not** return name/employeeCode. The application
-server resolves `externalUserId` against `limen_db.users`.
+### `POST /api/v1/fingerprints/identify`
 
-Errors use `{ "success": false, "error": { "code": "...", "message": "..." } }`.
+Mencocokkan capture R503 terhadap semua template.
 
----
-
-## 5. Enrollment
-
-1. Receive `externalUserId` (+ template or raw R503 image).
-2. Validate `externalUserId` non-empty, ≤ 100 chars.
-3. Obtain a SourceAFIS template (generate from raw image, or decode Base64).
-4. Atomically ensure `fingerprint_subjects` exists and insert the template.
-5. Return `subjectId`, `fingerprintId`, `externalUserId`, `templateSize`.
-
-Re-enrolling the same `externalUserId` adds another template to the same
-subject (a subject may have multiple templates).
-
----
-
-## 6. Identification
-
-1. Validate R503 size (exactly 18,432 bytes).
-2. Build the probe template.
-3. Load all candidates from `fingerprint_subjects` + `fingerprint_templates`.
-4. Score each, keep the highest, apply `Fingerprint:MatchThreshold`.
-5. Return `externalUserId` + `fingerprintId` when matched.
-
-No enrolled subjects → `matched:false`, `candidateCount:0`,
-`reason:"NO_ENROLLED_TEMPLATES"`. No global in-memory state; requests are
-independent.
-
----
-
-## 7. Configuration
-
-`appsettings.json` (no secrets):
-
-```json
-{
-  "ConnectionStrings": { "MySql": "" },
-  "Fingerprint": {
-    "Dpi": 508,
-    "MatchThreshold": 40,
-    "Diagnostics": { "SavePgm": false, "Directory": "./diagnostic-captures" }
-  },
-  "Server": { "MaxRequestBodySizeBytes": 65536 },
-  "Cors": { "AllowedOrigins": [] },
-  "Urls": "http://0.0.0.0:5001"
-}
+```powershell
+curl.exe -X POST http://localhost:5001/api/v1/fingerprints/identify `
+  -H "Content-Type: application/octet-stream" `
+  --data-binary "@capture.r503"
 ```
 
-The connection string **must point to `limen_db`** and use a
-`limen_user` with access only to that database:
+Response dapat berisi `matched: false`, atau saat cocok berisi
+`externalUserId` dan `fingerprintId`. `score` dibandingkan dengan
+`MatchThreshold`; `candidateCount` menunjukkan jumlah template yang diperiksa.
 
-```
-ConnectionStrings__MySql=Server=...;Port=3306;Database=limen_db;User ID=limen_user;Password=...;
-```
+### `POST /api/v1/fingerprints/diagnostics/capture`
 
-Use the same `limen_db` credentials as server; keep identification enrichment in server (HTTP gateway).
+Mengembalikan ukuran/statistik grayscale dan secara opsional menyimpan `.pgm`.
+Di luar Development, endpoint mengembalikan 404 jika `SavePgm` tidak aktif.
+Endpoint ini hanya untuk debugging terkontrol.
 
-### Environment variable mapping
+## Endpoint compatibility dan utilitas
 
-| Key | Environment variable |
-| --- | --- |
-| `ConnectionStrings:MySql` | `ConnectionStrings__MySql` |
-| `Fingerprint:Dpi` | `Fingerprint__Dpi` |
-| `Fingerprint:MatchThreshold` | `Fingerprint__MatchThreshold` |
-| `Fingerprint:Diagnostics:SavePgm` | `Fingerprint__Diagnostics__SavePgm` |
-| `Fingerprint:Diagnostics:Directory` | `Fingerprint__Diagnostics__Directory` |
-| `Server:MaxRequestBodySizeBytes` | `Server__MaxRequestBodySizeBytes` |
-| `Cors:AllowedOrigins:0` | `Cors__AllowedOrigins__0` |
-| listen URLs | `ASPNETCORE_URLS` |
-| environment | `ASPNETCORE_ENVIRONMENT` |
+Endpoint berikut dipertahankan untuk integrasi lama:
 
----
+| Method dan path | Kegunaan |
+|---|---|
+| `POST /enrollment` | Enrollment JSON lama; tetap membutuhkan `externalUserId`. `name` dan `employeeCode` tidak disimpan. |
+| `POST /identification` | Identification binary lama dengan response berbeda; gunakan endpoint versioned untuk integrasi baru. |
+| `POST /fingerprint/raw` | Validasi/unpack capture dan diagnostics lama. |
+| `POST /fingerprint/template` | Membuat template Base64 dari capture R503. |
+| `POST /fingerprint/match-test` | Membandingkan dua template Base64 untuk pengujian. |
 
-## 8. Security, logging, diagnostics, reliability
+## Health check
 
-- Centralized error contract; no stack traces/SQL/paths exposed.
-- Request body limits, content-type + exact-size validation.
-- CORS disabled unless `Cors:AllowedOrigins` is set.
-- Structured logs with `X-Request-Id`; no biometric data, templates, or secrets
-  logged.
-- Diagnostic `.pgm` writing is **off by default** and must remain off in
-  production. Never commit `.pgm` files.
-- Async DB access with `CancellationToken`; graceful shutdown (30s).
-- Auth/TLS are **not** implemented here and must be added at the reverse proxy
-  or as a configurable scheme before public exposure.
-- Threshold/DPI are development defaults and must be calibrated.
+| Endpoint | Arti |
+|---|---|
+| `GET /health` | Liveness compatibility. |
+| `GET /health/live` | Proses hidup; dipakai Docker. |
+| `GET /health/ready` | Readiness, termasuk koneksi PostgreSQL; 503 jika belum siap. |
+| `GET /api/v1/health` | Ringkasan health versioned. |
 
----
+## Error, keamanan, dan operasional
 
-## 9. Testing
+- Request invalid memakai response error JSON dengan `code`, `message`, dan
+  request/correlation ID sesuai handler.
+- API key bersifat opsional, tetapi wajib digunakan bila service diakses melalui
+  jaringan yang tidak sepenuhnya terpercaya.
+- Jangan menaruh password PostgreSQL atau `ApiKey` di repository/log.
+- Jangan mengaktifkan diagnostics secara permanen; file `.pgm` adalah data
+  biometrik sensitif dan direktori tersebut tidak boleh diserve secara publik.
+- `MatchThreshold` default adalah nilai development, bukan jaminan akurasi
+  produksi. Kalibrasikan false accept/false reject menggunakan dataset sensor
+  yang representatif.
+- Identification membaca seluruh kandidat dari database. Untuk skala besar,
+  evaluasi strategi indexing/caching sebelum menaikkan volume produksi.
 
-```bash
-dotnet test ../FingerprintService.sln
-```
+## Pengujian dan build
 
-Unit + integration tests cover R503 decoding/validation, threshold evaluation,
-enrollment/identification logic, health, error contracts, and
-**architecture guard tests** that fail if cross-database coupling is
-reintroduced (server must not query fingerprint tables; the fingerprint
-service must not query application data).
-
----
-
-## 10. Breaking changes vs. the shared-database version
-
-- Enrollment now uses `externalUserId`; 
-ame`/`employeeCode` are not stored.
-- Identification returns `externalUserId` + `fingerprintId` instead of
-  `userId`/
-ame`/`employeeCode`.
-- The service no longer reads a `users` table; it uses `fingerprint_subjects` + `fingerprint_templates` in `limen_db`.
-- Legacy `/enrollment` still accepts the old JSON shape but bridges
-  `employeeCode` → `externalUserId` and ignores 
-ame`.
-
----
-
-## 11. Deployment
-
-```
-Reverse Proxy / Load Balancer (HTTPS, auth)
-        │
-        ▼
-Fingerprint Service (:8080 in Docker)
-        │
-        ▼
-limen_db on MySQL (same instance as server)
+```powershell
+dotnet build
+dotnet run --environment Development
 ```
 
-Docker:
-
-```bash
-docker build -t fingerprint-service ./fingerprint-service
-docker run --rm -p 8080:8080 \
-  -e ConnectionStrings__MySql="Server=mysql;Port=3306;Database=limen_db;User ID=limen_user;Password=...;" \
-  fingerprint-service
-```
-
-Because the service is decoupled, it can be moved to a separate server with only
-its own connection string changed.
+Uji endpoint health terlebih dahulu, lalu enrollment dan identification dengan
+capture R503 nyata. Pastikan database, `externalUserId`, ukuran payload, dan
+`Content-Type` benar sebelum mendiagnosis masalah SourceAFIS.

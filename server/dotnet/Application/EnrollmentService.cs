@@ -139,6 +139,13 @@ public sealed class EnrollmentService
                 $"ExternalUserId maksimum {MaxExternalUserIdLength} karakter.");
         }
 
+        if (!Guid.TryParse(value, out _))
+        {
+            throw new ValidationException(
+                ApiErrorCodes.ValidationError,
+                "ExternalUserId harus berupa UUID users.id.");
+        }
+
         return value;
     }
 

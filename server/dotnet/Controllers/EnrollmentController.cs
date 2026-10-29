@@ -31,16 +31,13 @@ public sealed class EnrollmentController : ControllerBase
         [FromBody] EnrollmentRequest request,
         CancellationToken cancellationToken)
     {
-        string? externalUserId =
-            !string.IsNullOrWhiteSpace(request.ExternalUserId)
-                ? request.ExternalUserId
-                : request.EmployeeCode;
+        string? externalUserId = request.ExternalUserId;
 
         if (string.IsNullOrWhiteSpace(externalUserId))
         {
             throw new ValidationException(
                 ApiErrorCodes.ValidationError,
-                "ExternalUserId (atau EmployeeCode untuk kompatibilitas) wajib diisi.");
+                "ExternalUserId (users.id) wajib diisi.");
         }
 
         var result = await _enrollmentService.EnrollFromTemplateAsync(

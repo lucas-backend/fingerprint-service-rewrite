@@ -13,7 +13,7 @@ namespace FingerprintService.Recognition;
 ///   FingerprintImage -> FingerprintTemplate -> serialized template.
 ///
 /// The serialized template byte format is unchanged, so templates already
-/// stored in MySQL remain readable.
+/// stored in PostgreSQL remain readable.
 /// </summary>
 public sealed class FingerprintRecognitionService : IFingerprintRecognitionService
 {
